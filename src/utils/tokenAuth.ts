@@ -1,0 +1,120 @@
+import { NextFunction, Request, Response } from "express";
+import jwt from "jsonwebtoken";
+import { v4 } from "uuid";
+import CreateError from "./createError";
+import { getRedisClient, getValue, setValue } from "./redisConnection";
+
+/**
+ *Creates an access token for the User identified by UserID
+ * @param userID Unique ID for User
+ * @return access token (jwt)
+ */
+export function createAccessToken(userID: string) {
+  const signOptions: jwt.SignOptions = {
+    expiresIn: "600000",
+    algorithm: "RS256",
+  };
+  return jwt.sign({ userID }, process.env.PRIVATE_KEY as string, signOptions);
+}
+/**
+ * Expresss middleware to verify validity of the access token
+ * 
+ * @param req 
+ * @param res 
+ * @param next 
+ */
+export function verifyAccessToken(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const header = req.headers["authorization"];
+  if (!header) {
+    next(new CreateError("No Access Token Provided", 403, true));
+  } else {
+    const token = (header as string).split(" ")[1];
+    try {
+      const userID = jwt.verify(
+        token as string,
+        process.env.PUBLIC_KEY as string
+      );
+    } catch (err) {
+      next(new CreateError("Invalid Access Token", 403, true));
+    }
+  }
+}
+/**
+ * Creates a refresh token for the user identified by userID
+ *@param userID Unique ID for user
+ * @ptodo implement redis expiration
+ */
+export async function createRefreshToken(userID: string) {
+  const randomPayload = v4();
+  const signOptions: jwt.SignOptions = {
+    algorithm: "RS256",
+  };
+  await setValue(randomPayload, userID);
+
+  return jwt.sign(
+    randomPayload,
+    process.env.REFRESH_TOKEN_PRIVATE_KEY as string,
+    signOptions
+  );
+}
+/**
+ * Express middleware to verify validity of refresh token
+ * @param req 
+ * @param res 
+ * @param next 
+ */
+export async function verifyRefreshToken(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const refreshToken = req.cookies["refreshToken"];
+  if (!refreshToken) {
+    next(new CreateError("No refresh token provided", 403, true));
+  } else {
+    try {
+      const refreshTokenID = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_PUBLIC_KEY as string
+      );
+      const userID = await getValue(refreshTokenID as string);
+      if (userID) {
+        req.token = userID;
+        next();
+      } else {
+        throw new CreateError("Invalid Refresh Token", 403, true);
+      }
+    } catch (err) {
+      next(new CreateError("Invalid Refresh Token", 403, true));
+    }
+  }
+}
+/**
+ * Express Middleware to destory/invalidate refresh token (used for client logout)
+ * @param req 
+ * @param res 
+ * @param next 
+ */
+export function destroyRefreshToken(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const refreshToken = req.cookies["refreshToken"];
+  const refreshTokenDecoded = decode(refreshToken);
+  const refreshTokenID = (refreshTokenDecoded as any).payload;
+  const client = getRedisClient();
+  client.del(refreshTokenID as string);
+  next();
+}
+/**
+ * Decode a jwt without verifying 
+ * @param token 
+ */
+export function decode(token: string) {
+  return jwt.decode(token, { complete: true });
+}
