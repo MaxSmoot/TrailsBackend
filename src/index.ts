@@ -18,7 +18,7 @@ app.use(bodyparser.json());
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.NODE_ENV == "Production" ? "https://localhost:443":"http://localhost:8080",
+    origin: process.env.NODE_ENV == "production" ? "https://trails.maxwsmoot.com":"http://localhost:8080",
     optionsSuccessStatus: 200,
     credentials: true,
   })
