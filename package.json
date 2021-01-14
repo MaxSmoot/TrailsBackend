@@ -7,7 +7,7 @@
     "tsc": "tsc",
     "build": "tsc --project .",
     "dev": "nodemon src/index.ts",
-    "prod": "set NODE_ENV=production && node ./src/build/index.js"
+    "prod": "NODE_ENV=production node ./src/build/index.js"
   },
   "author": "",
   "license": "ISC",
