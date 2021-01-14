@@ -8,7 +8,6 @@ import auth from "./routes/authRoutes";
 import profile from "./routes/profileRoutes";
 import CreateError from "./utils/createError";
 import cookieParser from "cookie-parser";
-import { type } from "os";
 const app = express();
 const PORT = 3000;
 //initialize mySQL connection
