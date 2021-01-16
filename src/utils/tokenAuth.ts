@@ -99,18 +99,7 @@ export async function verifyRefreshToken(
  * @param res 
  * @param next 
  */
-export function destroyRefreshToken(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  const refreshToken = req.cookies["refreshToken"];
-  const refreshTokenDecoded = decode(refreshToken);
-  const refreshTokenID = (refreshTokenDecoded as any).payload;
-  const client = getRedisClient();
-  client.del(refreshTokenID as string);
-  next();
-}
+
 /**
  * Decode a jwt without verifying 
  * @param token 

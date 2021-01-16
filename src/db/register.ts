@@ -5,7 +5,7 @@ import hashPassword from "../utils/hashPassword";
 import createError from "../utils/createError";
 /**
  * Inserts new User into MySQL DB
- * @param params 
+ * @param params
  */
 export async function registerDB(params: RegisterParams) {
   const pool = getPool();
@@ -30,9 +30,10 @@ export async function registerDB(params: RegisterParams) {
       } else if (err.sqlMessage.includes("User.Unique_Email")) {
         errMsg = "That email is associated with an existing account.";
       }
-    }else {
-      throw new createError(errMsg, 400, true)
+    } else {
+      throw new createError(errMsg, 400, true);
     }
-    throw new createError(err, 400, true);
+    throw new createError(errMsg, 400, true);
+
   }
 }
