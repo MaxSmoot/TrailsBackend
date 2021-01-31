@@ -53,7 +53,7 @@ export async function loginUser(
     const cookieOptions: CookieOptions = {
       secure: process.env.NODE_ENV == "production" ? true : false,
       httpOnly: true,
-      sameSite: process.env.NODE_ENV == "production" ? true : false,
+      sameSite: process.env.NODE_ENV == "production" ? "strict" : "none",
     };
     if (req.body.rememberMe) {
       cookieOptions.maxAge = 1.577e10;
