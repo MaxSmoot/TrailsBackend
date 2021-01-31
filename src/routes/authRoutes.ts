@@ -1,14 +1,13 @@
-import { json } from "body-parser";
-import express, { Request, response } from "express";
-import asyncHandler from "express-async-handler";
+import express from "express";
 import {
   registerUser,
   loginUser,
   getToken,
   destroyRefreshToken,
+  getUserInfo,
 } from "../controllers/authController";
 
-import { verifyRefreshToken } from "../utils/tokenAuth";
+import { verifyRefreshToken, verifyAccessToken } from "../utils/tokenAuth";
 const router = express.Router();
 /**
  * Route to register a new user
@@ -27,4 +26,8 @@ router.get("/token", verifyRefreshToken, getToken);
  */
 router.get("/logout", verifyRefreshToken, destroyRefreshToken);
 
+/**
+ * route to get details about logged in user
+ */
+router.get("/userinfo", verifyAccessToken, getUserInfo);
 export default router;

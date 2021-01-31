@@ -5,7 +5,7 @@ import helmet from "helmet";
 import { createPool } from "./db/database";
 import { verifyAccessToken } from "./utils/tokenAuth";
 import auth from "./routes/authRoutes";
-import profile from "./routes/profileRoutes";
+import postRoutes from "./routes/postRoutes"
 import CreateError from "./utils/createError";
 import cookieParser from "cookie-parser";
 const app = express();
@@ -24,7 +24,7 @@ app.use(
 );
 app.use(cookieParser());
 app.use("/api/auth", auth);
-app.use("/api/authenticated", verifyAccessToken, profile);
+app.use("/api/authenticated/post", verifyAccessToken, postRoutes);
 /**
  * Handling invalid routes 404
  */

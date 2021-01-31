@@ -18,14 +18,14 @@ export function createAccessToken(userID: string) {
 }
 /**
  * Expresss middleware to verify validity of the access token
- * 
- * @param req 
- * @param res 
- * @param next 
+ *
+ * @param req
+ * @param res
+ * @param next
  */
 export function verifyAccessToken(
   req: Request,
-  res: Response,
+  __res: Response,
   next: NextFunction
 ) {
   const header = req.headers["authorization"];
@@ -38,6 +38,8 @@ export function verifyAccessToken(
         token as string,
         process.env.PUBLIC_KEY as string
       );
+      req.token = (userID as any).userID;
+      next();
     } catch (err) {
       next(new CreateError("Invalid Access Token", 403, true));
     }
@@ -63,13 +65,13 @@ export async function createRefreshToken(userID: string) {
 }
 /**
  * Express middleware to verify validity of refresh token
- * @param req 
- * @param res 
- * @param next 
+ * @param req
+ * @param res
+ * @param next
  */
 export async function verifyRefreshToken(
   req: Request,
-  res: Response,
+  __res: Response,
   next: NextFunction
 ) {
   const refreshToken = req.cookies["refreshToken"];
@@ -95,14 +97,14 @@ export async function verifyRefreshToken(
 }
 /**
  * Express Middleware to destory/invalidate refresh token (used for client logout)
- * @param req 
- * @param res 
- * @param next 
+ * @param req
+ * @param res
+ * @param next
  */
 
 /**
- * Decode a jwt without verifying 
- * @param token 
+ * Decode a jwt without verifying
+ * @param token
  */
 export function decode(token: string) {
   return jwt.decode(token, { complete: true });

@@ -5,6 +5,7 @@ import { LoginParams, RegisterParams } from "../models/authModels";
 import { CookieOptions, NextFunction, Request, Response } from "express";
 import { decode } from "../utils/tokenAuth";
 import { getRedisClient } from "../utils/redisConnection";
+import { getUserInfoDB } from "../db/userInfo";
 
 /**
  * Registers User to DB
@@ -90,4 +91,11 @@ export function destroyRefreshToken(req: Request, res: Response) {
   res.clearCookie("refreshToken");
   res.status(200);
   res.send({ auth: false, message: "refresh token destroyed" });
+}
+
+export async function getUserInfo(req: Request, res: Response) {
+  const userInfo = await getUserInfoDB(req.token as string);
+  res.status(200);
+  res.send(userInfo);
+
 }

@@ -2,7 +2,6 @@ import { getPool } from "./database";
 import { LoginParams } from "../models/authModels";
 import bcrypt from "bcrypt";
 import createError from "../utils/createError";
-import CreateError from "../utils/createError";
 /**
  * Checks given login parameters against MySQL DB
  * @param params 
