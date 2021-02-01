@@ -6,6 +6,9 @@ import { CookieOptions, NextFunction, Request, Response } from "express";
 import { decode } from "../utils/tokenAuth";
 import { getRedisClient } from "../utils/redisConnection";
 import { getUserInfoDB } from "../db/userInfo";
+import { User } from "../models/user";
+import { Password } from "../common/password";
+import { Email } from "../common/email";
 
 /**
  * Registers User to DB
@@ -19,9 +22,21 @@ export async function registerUser(
   next: NextFunction
 ) {
   try {
-    const userInfo = await registerDB(req.body);
-    const accessToken = createAccessToken(userInfo.UserID);
-    const refreshToken = await createRefreshToken(userInfo.UserID);
+    const body = req.body;
+    const password = await Password.of(body.password);
+    const email = new Email(body.email);
+    const userID = await registerDB(
+      new User(
+        body.username,
+        email,
+        password,
+        body.phone,
+        body.firstName,
+        body.lastName
+      )
+    );
+    const accessToken = createAccessToken(userID);
+    const refreshToken = await createRefreshToken(userID);
     res.cookie("refreshToken", refreshToken, {
       secure: process.env.NODE_ENV == "production" ? true : false,
       httpOnly: true,
@@ -30,6 +45,7 @@ export async function registerUser(
     res.status(200);
     res.send({ auth: true, token: accessToken });
   } catch (err) {
+    console.log(err);
     next(err);
   }
 }
@@ -53,7 +69,7 @@ export async function loginUser(
     const cookieOptions: CookieOptions = {
       secure: process.env.NODE_ENV == "production" ? true : false,
       httpOnly: true,
-      sameSite: process.env.NODE_ENV == "production" ? "strict" : "none",
+      sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
     };
     if (req.body.rememberMe) {
       cookieOptions.maxAge = 1.577e10;
@@ -97,5 +113,4 @@ export async function getUserInfo(req: Request, res: Response) {
   const userInfo = await getUserInfoDB(req.token as string);
   res.status(200);
   res.send(userInfo);
-
 }

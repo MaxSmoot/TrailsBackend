@@ -1,25 +1,30 @@
 import { getPool } from "./database";
-import { RegisterParams } from "../models/authModels";
 import { v4 } from "uuid";
-import hashPassword from "../utils/hashPassword";
 import createError from "../utils/createError";
+import { User } from "../models/user";
 /**
  * Inserts new User into MySQL DB
  * @param params
  */
-export async function registerDB(params: RegisterParams) {
+export async function registerDB(user: User) {
   const pool = getPool();
   try {
     const connection = await pool.getConnection();
-    const { username, password, phone, email, firstName, lastName } = params;
     const uuid = v4();
-    const hashedPassword = await hashPassword(password);
     await connection.execute(
       `INSERT INTO User (UserID, Username, Password, Email, Phone, Fname, Lname) VALUES (UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?)`,
-      [uuid, username, hashedPassword, email, phone, firstName, lastName]
+      [
+        uuid,
+        user.username,
+        user.password.getHash(),
+        user.email.value,
+        user.phone,
+        user.firstName,
+        user.lastName,
+      ]
     );
     connection.release();
-    return { UserID: uuid };
+    return uuid;
   } catch (err) {
     let errMsg = "Error";
     if ((err.errno = 1062)) {
@@ -34,6 +39,5 @@ export async function registerDB(params: RegisterParams) {
       throw new createError(errMsg, 400, true);
     }
     throw new createError(errMsg, 400, true);
-
   }
 }
