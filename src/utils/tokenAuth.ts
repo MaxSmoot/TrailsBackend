@@ -11,7 +11,7 @@ import { getRedisClient, getValue, setValue } from "./redisConnection";
  */
 export function createAccessToken(userID: string) {
   const signOptions: jwt.SignOptions = {
-    expiresIn: "600000",
+    expiresIn: "10000",
     algorithm: "RS256",
   };
   return jwt.sign({ userID }, process.env.PRIVATE_KEY as string, signOptions);
@@ -30,7 +30,7 @@ export function verifyAccessToken(
 ) {
   const header = req.headers["authorization"];
   if (!header) {
-    next(new CreateError("No Access Token Provided", 403, true));
+    next(new CreateError("No Access Token Provided", 401, true));
   } else {
     const token = (header as string).split(" ")[1];
     try {
@@ -41,7 +41,7 @@ export function verifyAccessToken(
       req.token = (userID as any).userID;
       next();
     } catch (err) {
-      next(new CreateError("Invalid Access Token", 403, true));
+      next(new CreateError("Invalid Access Token", 401, true));
     }
   }
 }
@@ -76,7 +76,7 @@ export async function verifyRefreshToken(
 ) {
   const refreshToken = req.cookies["refreshToken"];
   if (!refreshToken) {
-    next(new CreateError("No refresh token provided", 403, true));
+    next(new CreateError("No refresh token provided", 401, true));
   } else {
     try {
       const refreshTokenID = jwt.verify(
@@ -88,10 +88,10 @@ export async function verifyRefreshToken(
         req.token = userID;
         next();
       } else {
-        throw new CreateError("Invalid Refresh Token", 403, true);
+        throw new CreateError("Invalid Refresh Token", 401, true);
       }
     } catch (err) {
-      next(new CreateError("Invalid Refresh Token", 403, true));
+      next(new CreateError("Invalid Refresh Token", 401, true));
     }
   }
 }
