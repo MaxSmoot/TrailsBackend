@@ -11,7 +11,7 @@ import { getRedisClient, getValue, setValue } from "./redisConnection";
  */
 export function createAccessToken(userID: string) {
   const signOptions: jwt.SignOptions = {
-    expiresIn: "10000",
+    expiresIn: "300000",
     algorithm: "RS256",
   };
   return jwt.sign({ userID }, process.env.PRIVATE_KEY as string, signOptions);
