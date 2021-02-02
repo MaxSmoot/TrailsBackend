@@ -12,13 +12,14 @@ export async function createPool() {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
+    database: "process.env.DB_NAME",
     multipleStatements: true,
   });
-
-  const connection = await pool.getConnection();
-  connection.release();
 }
+
 export function getPool() {
   return pool;
+}
+export async function getConnection() {
+  return await pool.getConnection();
 }

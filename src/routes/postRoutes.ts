@@ -1,16 +1,16 @@
-
 import express, { NextFunction, Request, Response } from "express";
 import { createPost, getPosts } from "../controllers/postController";
-import {check, validationResult} from "express-validator"
-import CreateError from "../utils/createError"
+import { check, validationResult } from "express-validator";
+import CreateError from "../utils/createError";
 
 const router = express.Router();
 /**
  * Route to create a post
  */
-router.post("/", [check("postBody").isLength({min: 1, max: 255})],
-(req: Request, __res: Response, next: NextFunction) => {
-    console.log(req.body);
+router.post(
+  "/",
+  [check("postBody").isLength({ min: 1, max: 255 })],
+  (req: Request, __res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       let errorString = "";
@@ -24,6 +24,6 @@ router.post("/", [check("postBody").isLength({min: 1, max: 255})],
   },
   createPost
 );
-router.get("/", getPosts)
+router.get("/", getPosts);
 
 export default router;

@@ -1,23 +1,27 @@
 import CreateError from "../utils/createError";
-import { getPool } from "./database";
+import { getConnection, getPool } from "./database";
 
 export async function createPostDB(userID: string, body: string) {
-  const pool = getPool();
-  const connection = await pool.getConnection();
+  const connection = await getConnection().catch((e) => {
+    throw new CreateError(e, 500, false);
+  });
   try {
     await connection.execute(
       `INSERT INTO Posts (UserID, body) VALUES (UUID_TO_BIN(?), ?)`,
       [userID, body]
     );
+
     connection.release();
   } catch (e) {
+    console.log("down here");
     throw new CreateError(e, 401, true);
   }
 }
 
 export async function getPostsDB(userID: string) {
-  const pool = getPool();
-  const connection = await pool.getConnection();
+  const connection = await getConnection().catch((e) => {
+    throw new CreateError(e, 500, false);
+  });
   try {
     const [
       results,

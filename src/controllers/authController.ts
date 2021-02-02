@@ -45,7 +45,6 @@ export async function registerUser(
     res.status(200);
     res.send({ auth: true, token: accessToken });
   } catch (err) {
-    console.log(err);
     next(err);
   }
 }
