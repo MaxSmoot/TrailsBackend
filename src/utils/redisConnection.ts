@@ -16,6 +16,21 @@ export function getRedisClient() {
 redisClient.on("error", (err) => {
   throw new CreateError(err, 500, false);
 });
+
+export function delValue(key: string) {
+  return new Promise<string | null>((resolve, reject) => {
+    if(getRedisClient().del(key, (err, __reply) => {
+      if (err) {
+        return reject(err);
+      }
+    })){
+      return resolve(null)
+    }else{
+      return reject(null)
+    }
+  });
+}
+
 /**
  * Looks up value in Redis DB
  * @param key 

@@ -9,7 +9,7 @@ export async function createPost(
 ) {
   const body = req.body.postBody;
   if (body.length > 255 || body.length < 1) {
-    throw new CreateError("Invalid Post Body Length", 401, true);
+    next(new CreateError("Invalid Post Body Length", 401, true));
   } else {
     await createPostDB(req.token as string, body).catch((e) => {
       next(e);

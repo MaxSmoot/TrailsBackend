@@ -1,6 +1,5 @@
 import mysql2 from "mysql2/promise";
 import dotenv from "dotenv";
-import CreateError from "../utils/createError";
 let pool: mysql2.Pool;
 /**
  * Creates the MySQL Pool to be used by rest of backend

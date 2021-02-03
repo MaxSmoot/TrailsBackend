@@ -33,6 +33,6 @@ export async function getPostsDB(userID: string) {
     connection.release();
     return results;
   } catch (e) {
-    throw new CreateError(e, 401, true);
+    throw new CreateError(e, 500, false);
   }
 }

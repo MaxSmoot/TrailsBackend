@@ -78,19 +78,16 @@ export async function verifyRefreshToken(
   if (!refreshToken) {
     next(new CreateError("No refresh token provided", 401, true));
   } else {
-    try {
-      const refreshTokenID = jwt.verify(
-        refreshToken,
-        process.env.REFRESH_TOKEN_PUBLIC_KEY as string
-      );
-      const userID = await getValue(refreshTokenID as string);
-      if (userID) {
-        req.token = userID;
-        next();
-      } else {
-        throw new CreateError("Invalid Refresh Token", 401, true);
-      }
-    } catch (err) {
+    const refreshTokenID = <string>(
+      jwt.verify(refreshToken, `${process.env.REFRESH_TOKEN_PUBLIC_KEY}`)
+    );
+    const userID = await getValue(refreshTokenID).catch((e) =>
+      next(new CreateError(e, 500, false))
+    );
+    if (userID) {
+      req.token = userID;
+      next();
+    } else {
       next(new CreateError("Invalid Refresh Token", 401, true));
     }
   }

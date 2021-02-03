@@ -4,11 +4,12 @@ import { createAccessToken, createRefreshToken } from "../utils/tokenAuth";
 import { LoginParams, RegisterParams } from "../models/authModels";
 import { CookieOptions, NextFunction, Request, Response } from "express";
 import { decode } from "../utils/tokenAuth";
-import { getRedisClient } from "../utils/redisConnection";
+import { delValue, getRedisClient } from "../utils/redisConnection";
 import { getUserInfoDB } from "../db/userInfo";
 import { User } from "../models/user";
 import { Password } from "../common/password";
 import { Email } from "../common/email";
+import CreateError from "../utils/createError";
 
 /**
  * Registers User to DB
@@ -87,9 +88,10 @@ export async function loginUser(
  * @param req
  * @param res
  */
-export function getToken(req: Request, res: Response) {
-  const accessToken = createAccessToken(req.token as string);
-  res.send({ auth: true, token: accessToken });
+export function getToken(req: Request, res: Response, next: NextFunction) {
+  req.token
+    ? res.send({ auth: true, token: createAccessToken(req.token) })
+    : next(new CreateError("Missing Access Token", 401, true));
 }
 
 /**
@@ -97,19 +99,26 @@ export function getToken(req: Request, res: Response) {
  * @param req
  * @param res
  */
-export function destroyRefreshToken(req: Request, res: Response) {
+export async function destroyRefreshToken(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   const refreshToken = req.cookies["refreshToken"];
-  const refreshTokenDecoded = decode(refreshToken);
-  const refreshTokenID = (refreshTokenDecoded as any).payload;
-  const client = getRedisClient();
-  client.del(refreshTokenID as string);
+  const refreshTokenDecoded = <{ payload: string }>decode(refreshToken);
+  const refreshTokenID = refreshTokenDecoded.payload;
+  await delValue(refreshTokenID).catch((e) => next(e));
   res.clearCookie("refreshToken");
   res.status(200);
   res.send({ auth: false, message: "refresh token destroyed" });
 }
 
-export async function getUserInfo(req: Request, res: Response) {
-  const userInfo = await getUserInfoDB(req.token as string);
-  res.status(200);
-  res.send(userInfo);
+export async function getUserInfo(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  req.token
+    ? res.status(200).send(await getUserInfoDB(req.token as string))
+    : next(new CreateError("Missing Access Token", 401, true));
 }
