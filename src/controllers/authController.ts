@@ -19,7 +19,8 @@ const cookieOptions: CookieOptions = {
 };
 const secondaryCookieOptions:CookieOptions = {
   domain: ".maxwsmoot.com",
-  path: "/"
+  path: "/",
+  secure: process.env.NODE_ENV == "production" ? true : false
 };
 
 /**
