@@ -12,3 +12,8 @@ export interface LoginParams {
     password: string;
     rememberMe: boolean;
 }
+
+export interface RefreshTokensObject {
+    userID: string,
+    secondaryRefreshToken: string
+}

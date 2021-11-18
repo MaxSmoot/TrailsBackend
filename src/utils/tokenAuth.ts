@@ -1,8 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { v4 } from "uuid";
+import { RefreshTokensObject } from "../models/authModels";
 import CreateError from "./createError";
-import { getRedisClient, getValue, setValue } from "./redisConnection";
+import {
+  getRedisClient,
+  getRefreshTokens,
+  storeRefreshTokens,
+} from "./redisConnection";
 
 /**
  *Creates an access token for the User identified by UserID
@@ -50,18 +55,30 @@ export function verifyAccessToken(
  *@param userID Unique ID for user
  * @ptodo implement redis expiration
  */
-export async function createRefreshToken(userID: string) {
+export async function createRefreshToken(_userID: string) {
   const randomPayload = v4();
+  const secondaryRandomPayload = v4();
+  const tokenObject: RefreshTokensObject = {
+    userID: _userID,
+    secondaryRefreshToken: secondaryRandomPayload,
+  };
   const signOptions: jwt.SignOptions = {
     algorithm: "RS256",
   };
-  await setValue(randomPayload, userID);
+  await storeRefreshTokens(randomPayload, tokenObject);
 
-  return jwt.sign(
-    randomPayload,
-    process.env.REFRESH_TOKEN_PRIVATE_KEY as string,
-    signOptions
-  );
+  return {
+    refreshToken: jwt.sign(
+      randomPayload,
+      process.env.REFRESH_TOKEN_PRIVATE_KEY as string,
+      signOptions
+    ),
+    secondaryRefreshToken: jwt.sign(
+      secondaryRandomPayload,
+      process.env.REFRESH_TOKEN_PRIVATE_KEY as string,
+      signOptions
+    ),
+  };
 }
 
 /**
@@ -93,17 +110,15 @@ export async function verifyRefreshToken(
       )
     );
     //userID from httponly refresh token
-    const userID = await getValue(refreshTokenID).catch((_e) =>
+    const refreshTokensString = await getRefreshTokens(refreshTokenID).catch(() =>
       next(new CreateError("Invalid refresh token", 401, true))
     );
-    //userID from insecure secondary refresh token
-    const secondaryUserID = await getValue(secondaryRefreshTokenID).catch(
-      (_e) =>
-        next(new CreateError("Invalid secondary refresh token", 401, true))
-    );
+    //parse back into object
+    const refreshTokens : RefreshTokensObject = JSON.parse(refreshTokensString as string);
+    
     //both userIDs must match from both tokens
-    if (userID && (userID === secondaryUserID)) {
-      req.token = userID;
+    if (secondaryRefreshTokenID === refreshTokens.secondaryRefreshToken) {
+      req.token = refreshTokens.userID;
       next();
     } else {
       next(new CreateError("Invalid Refresh Token", 401, true));

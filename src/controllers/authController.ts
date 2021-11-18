@@ -11,6 +11,19 @@ import { Password } from "../common/password";
 import { Email } from "../common/email";
 import CreateError from "../utils/createError";
 
+//cookie options for registering and logging in
+const cookieOptions: CookieOptions = {
+  secure: process.env.NODE_ENV == "production" ? true : false,
+  httpOnly: true,
+  sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
+};
+const secondaryCookieOptions: CookieOptions = {
+  secure: process.env.NODE_ENV == "production" ? true : false,
+  sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
+  httpOnly: false,
+}
+
+
 /**
  * Registers User to DB
  * Creates Access Token and Refresh Token
@@ -37,12 +50,9 @@ export async function registerUser(
       )
     );
     const accessToken = createAccessToken(userID);
-    const refreshToken = await createRefreshToken(userID);
-    res.cookie("refreshToken", refreshToken, {
-      secure: process.env.NODE_ENV == "production" ? true : false,
-      httpOnly: true,
-      sameSite: process.env.NODE_ENV == "production" ? true : false,
-    });
+    const refreshTokenObject = await createRefreshToken(userID);
+    res.cookie("refreshToken", refreshTokenObject.refreshToken, cookieOptions);
+    res.cookie("secondaryRefreshToken", refreshTokenObject.secondaryRefreshToken, secondaryCookieOptions);
     res.status(200);
     res.send({ auth: true, token: accessToken });
   } catch (err) {
@@ -64,26 +74,16 @@ export async function loginUser(
 ) {
   try {
     const userID = await loginDB(req.body);
-    const refreshToken = await createRefreshToken(userID); //httponly secure refresh token
-    const secondaryRefreshToken = await createRefreshToken(userID); //non httponly refresh token to enable offline logout
+    const refreshTokenObject = await createRefreshToken(userID); //httponly secure refresh token
     const accessToken = createAccessToken(userID);
-    const cookieOptions: CookieOptions = {
-      secure: process.env.NODE_ENV == "production" ? true : false,
-      httpOnly: true,
-      sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
-    };
-    const secondaryCookieOptions: CookieOptions = {
-      secure: process.env.NODE_ENV == "production" ? true : false,
-      sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
-      httpOnly: false,
-    }
+
     if (req.body.rememberMe) {
       cookieOptions.maxAge = 1.577e10;
       secondaryCookieOptions.maxAge = 1.577e10;
     }
 
-    res.cookie("refreshToken", refreshToken, cookieOptions);
-    res.cookie("secondaryRefreshToken", secondaryRefreshToken, secondaryCookieOptions);
+    res.cookie("refreshToken", refreshTokenObject.refreshToken, cookieOptions);
+    res.cookie("secondaryRefreshToken", refreshTokenObject.secondaryRefreshToken, secondaryCookieOptions);
     res.status(200);
     res.send({ auth: true, token: accessToken });
   } catch (err) {
@@ -115,11 +115,7 @@ export async function destroyRefreshToken(
   const refreshToken = req.cookies["refreshToken"];
   const refreshTokenDecoded = <{ payload: string }>decode(refreshToken);
   const refreshTokenID = refreshTokenDecoded.payload;
-  const secondaryRefreshToken = req.cookies["secondaryRefreshToken"];
-  const secondaryRefreshTokenDecoded = <{ payload: string }>decode(secondaryRefreshToken);
-  const secondaryRefreshTokenID = secondaryRefreshTokenDecoded.payload;
   await delValue(refreshTokenID).catch((e) => next(e));
-  await delValue(secondaryRefreshTokenID).catch((e) => next(e));
   res.clearCookie("refreshToken");
   res.clearCookie("secondaryRefreshToken");
   res.status(200);

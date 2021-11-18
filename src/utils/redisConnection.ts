@@ -1,4 +1,5 @@
 import redis, { RedisClient } from "redis";
+import { RefreshTokensObject } from "../models/authModels";
 import CreateError from "./createError";
 const redisClient = redis.createClient();
 /**
@@ -35,7 +36,7 @@ export function delValue(key: string) {
  * Looks up value in Redis DB
  * @param key 
  */
-export function getValue(key: string) {
+export function getRefreshTokens(key: string) {
   return new Promise<string | null>((resolve, reject) => {
     getRedisClient().get(key, (err, reply) => {
       if (err) {
@@ -57,14 +58,14 @@ export function getValue(key: string) {
  * @param key 
  * @param value 
  */
-export function setValue(key: string, value: string) {
+export function storeRefreshTokens(key: string, value: RefreshTokensObject) {
   return new Promise<boolean>((resolve, reject)=>{
     const redisClient = getRedisClient()
     if(!redisClient.connected){
       reject(new CreateError("Redis Not connected", 500, false));
     }
     //set to expire in 186 days -- the max age of a refresh token
-    getRedisClient().set(key, value, 'EX', 60 * 60 * 24 * 186,(err, reply)=>{
+    getRedisClient().set(key, JSON.stringify(value),  'EX', 60 * 60 * 24 * 186,(err, reply)=>{
       if(err){
         reject(new CreateError(err.message, 500, false));
         return;
