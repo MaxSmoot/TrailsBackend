@@ -23,15 +23,27 @@ export async function getPostsDB(userID: string) {
     throw new CreateError(e, 500, false);
   });
   try {
-    const [
-      results,
-      fields,
-    ] = await connection.execute(
+    const [results, fields] = await connection.execute(
       `SELECT Posts.body, Posts.timestamp, User.Username FROM Posts JOIN User USING(UserID) WHERE (Posts.UserID = UUID_TO_BIN(?) OR Posts.UserID = (SELECT FollowingUser FROM Following WHERE Following.UserID = UUID_TO_BIN(?))) ORDER BY timestamp DESC`,
       [userID, userID]
     );
     connection.release();
     return results;
+  } catch (e) {
+    throw new CreateError(e, 500, false);
+  }
+}
+
+export async function deletePostDB(userID: string, timestamp: string) {
+  const connection = await getConnection().catch((e) => {
+    throw new CreateError(e, 500, false);
+  });
+  try {
+    await connection.execute(
+      `DELETE FROM Posts WHERE UserID = UUID_TO_BIN(?) AND timestamp = ?`,
+      [userID, timestamp]
+    );
+    connection.release();
   } catch (e) {
     throw new CreateError(e, 500, false);
   }

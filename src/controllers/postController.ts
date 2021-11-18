@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { Post } from "../models/postModels";
-import { createPostDB, getPostsDB } from "../db/postDB";
+import { CreatePost, DeletePost } from "../models/postModels";
+import { createPostDB, deletePostDB, getPostsDB } from "../db/postDB";
 import CreateError from "../utils/createError";
 export async function createPost(
-  req: Request<{}, {}, Post>,
+  req: Request<{}, {}, CreatePost>,
   res: Response,
   next: NextFunction
 ) {
@@ -30,5 +30,18 @@ export async function getPosts(
     res.send(posts);
   } catch (e) {
     next(e);
+  }
+}
+
+export async function deletePost(req: Request<{}, {}, DeletePost>, res: Response, next: NextFunction){
+  if(req.body.userID != req.token) {
+    next(new CreateError("unauthorized delete request", 403, true));
+  }
+  else {
+    try {
+      await deletePostDB(req.body.userID, req.body.timestamp);
+    } catch (e) {
+      next(e);
+    }
   }
 }

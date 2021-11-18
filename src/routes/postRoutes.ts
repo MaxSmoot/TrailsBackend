@@ -1,5 +1,5 @@
 import express, { NextFunction, Request, Response } from "express";
-import { createPost, getPosts } from "../controllers/postController";
+import { createPost, getPosts, deletePost } from "../controllers/postController";
 import { check, validationResult } from "express-validator";
 import CreateError from "../utils/createError";
 
@@ -25,5 +25,7 @@ router.post(
   createPost
 );
 router.get("/", getPosts);
+
+router.delete("/", deletePost);
 
 export default router;

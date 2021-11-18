@@ -63,6 +63,7 @@ export async function createRefreshToken(userID: string) {
     signOptions
   );
 }
+
 /**
  * Express middleware to verify validity of refresh token
  * @param req
@@ -71,20 +72,37 @@ export async function createRefreshToken(userID: string) {
  */
 export async function verifyRefreshToken(
   req: Request,
-  __res: Response,
+  res: Response,
   next: NextFunction
 ) {
   const refreshToken = req.cookies["refreshToken"];
+  const secondaryRefreshToken = req.cookies["secondaryRefreshToken"];
   if (!refreshToken) {
     next(new CreateError("No refresh token provided", 401, true));
+  } else if (!secondaryRefreshToken) {
+    res.clearCookie("refreshToken"); //clear refreshToken if no secondary refreshToken is present
+    next(new CreateError("No secondary refresh token provided", 401, true));
   } else {
     const refreshTokenID = <string>(
       jwt.verify(refreshToken, `${process.env.REFRESH_TOKEN_PUBLIC_KEY}`)
     );
-    const userID = await getValue(refreshTokenID).catch((e) =>
-      next(new CreateError(e, 500, false))
+    const secondaryRefreshTokenID = <string>(
+      jwt.verify(
+        secondaryRefreshToken,
+        `${process.env.REFRESH_TOKEN_PUBLIC_KEY}`
+      )
     );
-    if (userID) {
+    //userID from httponly refresh token
+    const userID = await getValue(refreshTokenID).catch((_e) =>
+      next(new CreateError("Invalid refresh token", 401, true))
+    );
+    //userID from insecure secondary refresh token
+    const secondaryUserID = await getValue(secondaryRefreshTokenID).catch(
+      (_e) =>
+        next(new CreateError("Invalid secondary refresh token", 401, true))
+    );
+    //both userIDs must match from both tokens
+    if (userID && (userID === secondaryUserID)) {
       req.token = userID;
       next();
     } else {
@@ -92,12 +110,6 @@ export async function verifyRefreshToken(
     }
   }
 }
-/**
- * Express Middleware to destory/invalidate refresh token (used for client logout)
- * @param req
- * @param res
- * @param next
- */
 
 /**
  * Decode a jwt without verifying

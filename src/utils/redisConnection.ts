@@ -63,7 +63,8 @@ export function setValue(key: string, value: string) {
     if(!redisClient.connected){
       reject(new CreateError("Redis Not connected", 500, false));
     }
-    getRedisClient().set(key, value, (err, reply)=>{
+    //set to expire in 186 days -- the max age of a refresh token
+    getRedisClient().set(key, value, 'EX', 60 * 60 * 24 * 186,(err, reply)=>{
       if(err){
         reject(new CreateError(err.message, 500, false));
         return;

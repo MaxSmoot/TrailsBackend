@@ -4,7 +4,7 @@ import { createAccessToken, createRefreshToken } from "../utils/tokenAuth";
 import { LoginParams, RegisterParams } from "../models/authModels";
 import { CookieOptions, NextFunction, Request, Response } from "express";
 import { decode } from "../utils/tokenAuth";
-import { delValue, getRedisClient } from "../utils/redisConnection";
+import { delValue  } from "../utils/redisConnection";
 import { getUserInfoDB } from "../db/userInfo";
 import { User } from "../models/user";
 import { Password } from "../common/password";
@@ -64,18 +64,26 @@ export async function loginUser(
 ) {
   try {
     const userID = await loginDB(req.body);
-    const refreshToken = await createRefreshToken(userID);
+    const refreshToken = await createRefreshToken(userID); //httponly secure refresh token
+    const secondaryRefreshToken = await createRefreshToken(userID); //non httponly refresh token to enable offline logout
     const accessToken = createAccessToken(userID);
     const cookieOptions: CookieOptions = {
       secure: process.env.NODE_ENV == "production" ? true : false,
       httpOnly: true,
       sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
     };
+    const secondaryCookieOptions: CookieOptions = {
+      secure: process.env.NODE_ENV == "production" ? true : false,
+      sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
+      httpOnly: false,
+    }
     if (req.body.rememberMe) {
       cookieOptions.maxAge = 1.577e10;
+      secondaryCookieOptions.maxAge = 1.577e10;
     }
 
     res.cookie("refreshToken", refreshToken, cookieOptions);
+    res.cookie("secondaryRefreshToken", secondaryRefreshToken, secondaryCookieOptions);
     res.status(200);
     res.send({ auth: true, token: accessToken });
   } catch (err) {
@@ -107,8 +115,13 @@ export async function destroyRefreshToken(
   const refreshToken = req.cookies["refreshToken"];
   const refreshTokenDecoded = <{ payload: string }>decode(refreshToken);
   const refreshTokenID = refreshTokenDecoded.payload;
+  const secondaryRefreshToken = req.cookies["secondaryRefreshToken"];
+  const secondaryRefreshTokenDecoded = <{ payload: string }>decode(secondaryRefreshToken);
+  const secondaryRefreshTokenID = secondaryRefreshTokenDecoded.payload;
   await delValue(refreshTokenID).catch((e) => next(e));
+  await delValue(secondaryRefreshTokenID).catch((e) => next(e));
   res.clearCookie("refreshToken");
+  res.clearCookie("secondaryRefreshToken");
   res.status(200);
   res.send({ auth: false, message: "refresh token destroyed" });
 }
