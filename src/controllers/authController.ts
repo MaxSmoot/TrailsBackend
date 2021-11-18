@@ -4,7 +4,7 @@ import { createAccessToken, createRefreshToken } from "../utils/tokenAuth";
 import { LoginParams, RegisterParams } from "../models/authModels";
 import { CookieOptions, NextFunction, Request, Response } from "express";
 import { decode } from "../utils/tokenAuth";
-import { delValue  } from "../utils/redisConnection";
+import { delValue } from "../utils/redisConnection";
 import { getUserInfoDB } from "../db/userInfo";
 import { User } from "../models/user";
 import { Password } from "../common/password";
@@ -17,9 +17,8 @@ const cookieOptions: CookieOptions = {
   httpOnly: true,
   sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
 };
-const secondaryCookieOptions:CookieOptions = {
-
-
+const secondaryCookieOptions: CookieOptions = {
+  secure: process.env.NODE_ENV == "production" ? true : false,
 };
 
 /**
@@ -50,7 +49,11 @@ export async function registerUser(
     const accessToken = createAccessToken(userID);
     const refreshTokenObject = await createRefreshToken(userID);
     res.cookie("refreshToken", refreshTokenObject.refreshToken, cookieOptions);
-    res.cookie("secondaryRefreshToken", refreshTokenObject.secondaryRefreshToken, secondaryCookieOptions);
+    res.cookie(
+      "secondaryRefreshToken",
+      refreshTokenObject.secondaryRefreshToken,
+      secondaryCookieOptions
+    );
     res.status(200);
     res.send({ auth: true, token: accessToken });
   } catch (err) {
@@ -81,7 +84,11 @@ export async function loginUser(
     }
 
     res.cookie("refreshToken", refreshTokenObject.refreshToken, cookieOptions);
-    res.cookie("secondaryRefreshToken", refreshTokenObject.secondaryRefreshToken, secondaryCookieOptions);
+    res.cookie(
+      "secondaryRefreshToken",
+      refreshTokenObject.secondaryRefreshToken,
+      secondaryCookieOptions
+    );
     res.status(200);
     res.send({ auth: true, token: accessToken });
   } catch (err) {
