@@ -18,9 +18,7 @@ const cookieOptions: CookieOptions = {
   sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
 };
 const secondaryCookieOptions: CookieOptions = {
-  secure: process.env.NODE_ENV == "production" ? true : false,
-  domain: "www.trails.maxwsmoot.com",
-  path: "/",
+
 };
 
 /**
