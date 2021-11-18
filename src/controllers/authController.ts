@@ -18,7 +18,7 @@ const cookieOptions: CookieOptions = {
   sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
 };
 const secondaryCookieOptions: CookieOptions = {
-
+  sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
 };
 
 /**
