@@ -17,12 +17,6 @@ const cookieOptions: CookieOptions = {
   httpOnly: true,
   sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
 };
-const secondaryCookieOptions: CookieOptions = {
-  secure: false,
-  sameSite: false,
-  httpOnly: false,
-}
-
 
 /**
  * Registers User to DB
@@ -52,7 +46,7 @@ export async function registerUser(
     const accessToken = createAccessToken(userID);
     const refreshTokenObject = await createRefreshToken(userID);
     res.cookie("refreshToken", refreshTokenObject.refreshToken, cookieOptions);
-    res.cookie("secondaryRefreshToken", refreshTokenObject.secondaryRefreshToken, secondaryCookieOptions);
+    res.cookie("secondaryRefreshToken", refreshTokenObject.secondaryRefreshToken);
     res.status(200);
     res.send({ auth: true, token: accessToken });
   } catch (err) {
