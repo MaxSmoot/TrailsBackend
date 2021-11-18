@@ -17,7 +17,10 @@ const cookieOptions: CookieOptions = {
   httpOnly: true,
   sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
 };
-const secondaryCookieOptions:CookieOptions = {};
+const secondaryCookieOptions:CookieOptions = {
+  domain: ".maxwsmoot.com",
+  path: "/"
+};
 
 /**
  * Registers User to DB
