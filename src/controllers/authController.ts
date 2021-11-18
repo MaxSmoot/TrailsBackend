@@ -19,6 +19,7 @@ const cookieOptions: CookieOptions = {
 };
 const secondaryCookieOptions: CookieOptions = {
   sameSite: process.env.NODE_ENV == "production" ? "strict" : "lax",
+  domain: ".maxwsmoot.com"
 };
 
 /**
